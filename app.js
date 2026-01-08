@@ -213,3 +213,82 @@ async function ocrBatchAll() {
     await new Promise(r => setTimeout(r, 300)); // pause légère pour le mobile
   }
 }
+// ================== OCR PARSING ==================
+
+// normalisation texte OCR
+function normText(t){
+  return (t||"")
+    .replace(/[^\S\r\n]+/g," ")
+    .replace(/,/g,".")
+    .toUpperCase();
+}
+
+// sets connus
+const SETS = [
+  "VIOLENT","WILL","SWIFT","DESPAIR","RAGE","FATAL","BLADE",
+  "ENERGY","GUARD","SHIELD","REVENGE","NEMESIS","DESTROY",
+  "FOCUS","ACCURACY","ENDURE","TOLERANCE","FIGHT","DETERMINATION","ENHANCE",
+  "SEAL","INTANGIBLE"
+];
+
+// stats connues
+const STAT_KEYS = ["SPD","HP%","ATK%","DEF%","CR","CD","ACC","RES","HP","ATK","DEF"];
+
+function detectSet(text){
+  for(const s of SETS){
+    if(text.includes(s)) return s;
+  }
+  return "";
+}
+
+function detectSlot(text){
+  const m = text.match(/SLOT\s*([1-6])/);
+  if(m) return m[1];
+  return "";
+}
+
+function detectStars(text){
+  const m = text.match(/([4-6])\s*STAR/);
+  return m ? m[1] : "";
+}
+
+function detectLevel(text){
+  const m = text.match(/\+(\d{1,2})/);
+  return m ? "+"+m[1] : "";
+}
+
+function detectMainStat(text){
+  for(const k of STAT_KEYS){
+    const re = new RegExp(k.replace("%","\\%")+"\\s*\\+","i");
+    if(re.test(text)) return k;
+  }
+  return "";
+}
+
+function detectSubstats(text){
+  const subs = [];
+  const lines = text.split("\n");
+  for(const l of lines){
+    for(const k of STAT_KEYS){
+      const re = new RegExp(k.replace("%","\\%")+"\\s*\\+\\s*\\d","i");
+      if(re.test(l)) subs.push(l.trim());
+    }
+  }
+  return [...new Set(subs)];
+}
+
+// Remplit le formulaire à partir du texte OCR
+function fillFormFromOCR(text){
+  const t = normText(text);
+
+  $("fSet").value   = detectSet(t);
+  $("fSlot").value  = detectSlot(t);
+  $("fStars").value = detectStars(t);
+  $("fLevel").value = detectLevel(t);
+
+  const main = detectMainStat(t);
+  $("fMain").value = main;
+
+  const subs = detectSubstats(text);
+  $("fSubs").value = subs.filter(s => !s.includes(main)).join("\n");
+}
