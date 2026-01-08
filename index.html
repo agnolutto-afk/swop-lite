@@ -9,75 +9,125 @@
   <meta name="theme-color" content="#111">
 
   <style>
-    body {
-      margin: 0;
-      font-family: system-ui, sans-serif;
-      background: #111;
-      color: #eee;
+    :root{ --bg:#111; --card:#1e1e1e; --card2:#252525; --text:#eee; --muted:#aaa; --line:#333; }
+    body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; background:var(--bg); color:var(--text); }
+    header{ padding:12px; background:var(--card); text-align:center; font-weight:700; border-bottom:1px solid var(--line); }
+    section{ display:none; padding:16px; padding-bottom:72px; }
+    section.active{ display:block; }
+    nav{ position:fixed; left:0; right:0; bottom:0; display:flex; border-top:1px solid var(--line); background:var(--card); }
+    nav button{ flex:1; padding:14px 10px; background:transparent; color:var(--text); border:0; font-size:14px; }
+    nav button.active{ background:var(--card2); }
+    .card{ background:var(--card); padding:12px; border-radius:12px; margin-bottom:12px; border:1px solid var(--line); }
+    h2,h3{ margin:8px 0 10px; }
+    p{ margin:8px 0; }
+    .muted{ color:var(--muted); }
+    .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .grid4{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+    label{ display:block; font-size:12px; color:var(--muted); }
+    input[type="file"]{ width:100%; }
+    input, select, textarea{
+      width:100%; box-sizing:border-box; padding:10px; border-radius:10px;
+      border:1px solid var(--line); background:#0f0f0f; color:var(--text);
     }
-    header {
-      padding: 12px;
-      background: #1e1e1e;
-      text-align: center;
-      font-weight: bold;
+    textarea{ min-height:96px; }
+    .btn{
+      padding:10px 12px; border:0; border-radius:10px; background:#2b2b2b; color:var(--text);
     }
-    nav {
-      display: flex;
-      border-top: 1px solid #333;
-    }
-    nav button {
-      flex: 1;
-      padding: 12px;
-      background: #1e1e1e;
-      color: #eee;
-      border: none;
-      font-size: 14px;
-    }
-    nav button.active {
-      background: #333;
-    }
-    section {
-      display: none;
-      padding: 16px;
-    }
-    section.active {
-      display: block;
-    }
-    .card {
-      background: #1e1e1e;
-      padding: 12px;
-      border-radius: 8px;
-      margin-bottom: 12px;
-    }
-    input[type="file"] {
-      width: 100%;
-    }
+    .btn.primary{ background:#3b3b3b; }
+    img{ width:100%; border-radius:12px; display:none; border:1px solid var(--line); }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    .hr{ height:1px; background:var(--line); margin:10px 0; }
+    .pill{ display:inline-block; padding:4px 8px; border-radius:999px; background:#2a2a2a; border:1px solid #3a3a3a; font-size:12px; }
   </style>
 </head>
 
 <body>
-
 <header>SWOP Lite</header>
 
+<!-- SCAN -->
 <section id="view-scan" class="active">
   <div class="card">
-    <h2>Scan runes</h2>
+    <h2>Scan (import images)</h2>
     <input type="file" id="scanInput" accept="image/*" multiple>
-    <p style="opacity:.7">Importe plusieurs screenshots de runes</p>
+    <p class="muted">Sélectionne plusieurs screenshots de runes.</p>
+    <div class="row">
+      <span class="pill" id="scanInfo">Aucune image.</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Crop avant scan (en %)</h3>
+    <p class="muted">Même zone sur toutes les images.</p>
+
+    <div class="grid4">
+      <label>X%<input id="cropX" inputmode="numeric" value="20"></label>
+      <label>Y%<input id="cropY" inputmode="numeric" value="18"></label>
+      <label>W%<input id="cropW" inputmode="numeric" value="60"></label>
+      <label>H%<input id="cropH" inputmode="numeric" value="55"></label>
+    </div>
+
+    <div class="row" style="margin-top:10px;">
+      <button class="btn" id="btnPrevImg">◀</button>
+      <button class="btn" id="btnNextImg">▶</button>
+      <button class="btn primary" id="btnPreviewCrop">Aperçu crop</button>
+    </div>
+
+    <div class="hr"></div>
+
+    <p class="muted mono" id="imgMeta"></p>
+    <img id="imgPreview" alt="Image">
+    <img id="cropPreview" alt="Crop">
+  </div>
+
+  <div class="card">
+    <h3>Ajout manuel (test)</h3>
+    <p class="muted">Pour tester la liste des runes (en attendant l’OCR).</p>
+
+    <div class="row">
+      <label style="flex:1">Set<input id="fSet" placeholder="Violent"></label>
+      <label style="flex:1">Slot<input id="fSlot" placeholder="2"></label>
+    </div>
+
+    <div class="row">
+      <label style="flex:1">Stars<input id="fStars" placeholder="6"></label>
+      <label style="flex:1">Grade<input id="fGrade" placeholder="Hero"></label>
+      <label style="flex:1">Level<input id="fLevel" placeholder="+15"></label>
+    </div>
+
+    <label>Main stat<input id="fMain" placeholder="SPD +42"></label>
+    <label>Subs (1 par ligne)<textarea id="fSubs" placeholder="HP% +8&#10;DEF% +8&#10;CR +6&#10;ATK% +8"></textarea></label>
+
+    <div class="row">
+      <label style="flex:1" class="muted"><input type="checkbox" id="fLocked"> Verrouillée</label>
+      <button class="btn primary" id="btnSaveRune">Enregistrer rune</button>
+    </div>
+
+    <p class="muted mono" id="saveMsg"></p>
   </div>
 </section>
 
+<!-- RUNES -->
 <section id="view-runes">
   <div class="card">
-    <h2>Liste des runes</h2>
-    <p>(à venir)</p>
+    <h2>Runes</h2>
+    <div class="row">
+      <button class="btn" id="btnExport">Exporter JSON</button>
+      <button class="btn" id="btnClear">Tout effacer</button>
+    </div>
+    <p class="muted mono" id="runeCount"></p>
+  </div>
+
+  <div class="card">
+    <h3>Liste</h3>
+    <div id="runeList" class="mono"></div>
   </div>
 </section>
 
+<!-- OPTIMIZER -->
 <section id="view-optimizer">
   <div class="card">
-    <h2>Optimiseur</h2>
-    <p>(à venir)</p>
+    <h2>Optimiser</h2>
+    <p class="muted">On ajoute l’optimiseur après l’OCR batch. (Prochaine étape)</p>
   </div>
 </section>
 
@@ -89,10 +139,7 @@
 
 <script src="app.js"></script>
 <script>
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("./sw.js");
-  }
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(()=>{});
 </script>
-
 </body>
 </html>
