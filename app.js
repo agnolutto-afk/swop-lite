@@ -195,10 +195,13 @@ async function ocrCropFromCurrentImage() {
   $("imgMeta").textContent = "OCR en cours...";
 
   const result = await Tesseract.recognize(
-    out.cropUrl,
-    "eng",
-    { logger: m => $("imgMeta").textContent = `OCR ${Math.round((m.progress||0)*100)}%` }
-  );
+  out.cropUrl,
+  "eng",
+  {
+    logger: m => $("imgMeta").textContent = `OCR ${Math.round((m.progress||0)*100)}%`,
+    tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789%+.- \n"
+  }
+);
 
   $("imgMeta").textContent = result.data.text || "(aucun texte détecté)";
 fillFormFromOCR(result.data.text || "");}
