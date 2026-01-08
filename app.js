@@ -199,7 +199,8 @@ async function ocrCropFromCurrentImage() {
   "eng",
   {
     logger: m => $("imgMeta").textContent = `OCR ${Math.round((m.progress||0)*100)}%`,
-    tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789%+.- \n"
+    tessedit_pageseg_mode: "6",
+    tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789%+.-(): \n"
   }
 );
 
