@@ -271,19 +271,45 @@ function detectMainStat(text){
 
 function detectSubstats(text){
   const subs = [];
-  const lines = text.split("\n");
-  for(const l of lines){
-    for(const k of STAT_KEYS){
-      const re = new RegExp(k.replace("%","\\%")+"\\s*\\+\\s*\\d","i");
-      if(re.test(l)) subs.push(l.trim());
+  const lines = (text || "").split("\n").map(l => l.trim()).filter(Boolean);
+
+  for (const line of lines) {
+
+    // Ignore le bruit évident
+    if (/\b\d+\/\d+\b/.test(line)) continue; // 162/2234
+    if (/POWER|SELL|TEMPORARILY/i.test(line)) continue;
+
+    // SPD +25 | SPD +21+4
+    if (/^SPD\s*\+\d+(\+\d+)?$/i.test(line)) {
+      subs.push(line);
+      continue;
+    }
+
+    // HP +17% | HP +11%+6%
+    if (/^HP\s*\+\d+%(\+\d+%)?$/i.test(line)) {
+      subs.push(line);
+      continue;
+    }
+
+    // HP +565 | HP +138+427
+    if (/^HP\s*\+\d+(\+\d+)?$/i.test(line)) {
+      subs.push(line);
+      continue;
+    }
+
+    // ATK / DEF / ACC / RES
+    if (/^(ATK|DEF|ACCURACY|RESISTANCE)\s*\+\d+%?(\+\d+%?)?$/i.test(line)) {
+      subs.push(line);
+      continue;
     }
   }
+
   return [...new Set(subs)];
 }
 
 // Remplit le formulaire à partir du texte OCR
 function fillFormFromOCR(text){
-  const t = normText(text);
+  const t = fixCommonOcr(normText(text));
 
   $("fSet").value   = detectSet(t);
   $("fSlot").value  = detectSlot(t);
