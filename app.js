@@ -219,39 +219,59 @@ async function ocrBatchAll() {
 }
 // ================== OCR PARSING ==================
 function cleanAndFormatOcr(raw){
-  let t = (raw || "").replace(/\r/g, " ");
+  let s = (raw || "")
+    .replace(/\r/g, " ")
+    .replace(/\n/g, " ")
+    .replace(/[“”]/g, '"')
+    .replace(/[^\S]+/g, " ")
+    .trim();
 
-  // Corrige erreurs OCR fréquentes
-  t = t.toUpperCase()
+  // Fix OCR fréquent
+  s = s.toUpperCase()
        .replace(/SWIIT/g, "SWIFT")
-       .replace(/SWI1T/g, "SWIFT")
+       .replace(/SWIF1/g, "SWIFT")
        .replace(/S W I F T/g, "SWIFT");
 
-  // Supprime bruit très fréquent
-  t = t.replace(/\b\d+\/\d+\b/g, " ");           // ex 162/2234
-  t = t.replace(/TEMPORARILY|POWER[- ]?UP|SELL/gi, " ");
+  // 1) Titre : "+15 SWIFT RUNE (1)" (ou autre set)
+  const titleMatch = s.match(/\+\s*\d+\s+([A-Z]+)\s+RUNE\s*\(\d\)/);
+  const title = titleMatch ? titleMatch[0].replace(/\s+/g, " ") : "";
 
-  // Force des "lignes" en mettant \n avant des patterns utiles
-  // 1) Titre rune
-  t = t.replace(/(\+\d+\s+[^]*?RUNE\s*\(\d\))/g, "\n$1\n");
+  // 2) Bonus de set : "4 SET : SPD +25%"
+  const setBonusMatch = s.match(/\d+\s*SET\s*:\s*SPD\s*\+\s*\d+%/);
+  const setBonus = setBonusMatch ? setBonusMatch[0].replace(/\s+/g, " ") : "";
 
-  // 2) Main/Sub stats : ATK +160 / HP +17% / SPD +25 / ACCURACY +7% etc.
-  t = t.replace(/(ATK|HP|DEF|SPD|ACCURACY|RESISTANCE|CR|CD)\s*\+\s*\d+(\+\d+)?%?/g, "\n$1 +$0".replace("$1 +","") );
+  // 3) Toutes les lignes de stats trouvées (main + subs)
+  // Gère: "SPD +25" , "HP +17%" , "HP +138+427" , "SPD +21+4"
+  const statRe = /\b(SPD|HP|ATK|DEF|ACCURACY|RESISTANCE|CR|CD)\s*\+\s*\d+(?:\+\d+)?%?\b/g;
+  const stats = [];
+  let m;
+  while ((m = statRe.exec(s)) !== null) {
+    stats.push(m[0].replace(/\s+/g, " "));
+  }
 
-  // La ligne ci-dessus peut être trop aggressive selon navigateur,
-  // donc on fait une version plus sûre juste après :
-  t = t.replace(/(ATK|HP|DEF|SPD|ACCURACY|RESISTANCE|CR|CD)\s*\+\s*/g, "\n$1 +");
+  // 4) Main stat = première stat "ATK/HP/DEF/SPD" trouvée
+  // (sur tes runes slot 1 c'est souvent ATK/HP/DEF)
+  let main = "";
+  for (const st of stats) {
+    if (/^(ATK|HP|DEF|SPD)\s*\+\s*\d+%?/.test(st)) { main = st; break; }
+  }
 
-  // 3) Ligne set bonus
-  t = t.replace(/(\d+\s*SET\s*:\s*SPD\s*\+\s*\d+%)/g, "\n$1\n");
+  // 5) Substats = toutes les stats sauf la main (garde doublons uniques)
+  const subs = [];
+  for (const st of stats) {
+    if (main && st === main) continue;
+    if (!subs.includes(st)) subs.push(st);
+  }
 
-  // Nettoyage final
-  t = t.replace(/[“”‘’]/g, '"')
-       .replace(/[^\S\n]+/g, " ")
-       .replace(/\n+/g, "\n")
-       .trim();
+  // Reconstruit en lignes propres
+  const lines = [];
+  if (title) lines.push(title);
+  if (main) lines.push(main);
+  for (const st of subs) lines.push(st);
+  if (setBonus) lines.push(setBonus);
 
-  return t;
+  // Si tout a échoué, fallback = texte brut
+  return lines.length ? lines.join("\n") : (raw || "");
 }
 // normalisation texte OCR
 function normText(t){
