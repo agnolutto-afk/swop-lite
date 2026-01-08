@@ -204,9 +204,9 @@ async function ocrCropFromCurrentImage() {
   }
 );
 
-  $("imgMeta").textContent = result.data.text || "(aucun texte détecté)";
-fillFormFromOCR(result.data.text || "");}
-
+  const cleaned = cleanAndFormatOcr(result.data.text || "");
+$("imgMeta").textContent = cleaned || "(aucun texte détecté)";
+fillFormFromOCR(cleaned);
 async function ocrBatchAll() {
   if (!files.length) return;
 
@@ -218,7 +218,41 @@ async function ocrBatchAll() {
   }
 }
 // ================== OCR PARSING ==================
+function cleanAndFormatOcr(raw){
+  let t = (raw || "").replace(/\r/g, " ");
 
+  // Corrige erreurs OCR fréquentes
+  t = t.toUpperCase()
+       .replace(/SWIIT/g, "SWIFT")
+       .replace(/SWI1T/g, "SWIFT")
+       .replace(/S W I F T/g, "SWIFT");
+
+  // Supprime bruit très fréquent
+  t = t.replace(/\b\d+\/\d+\b/g, " ");           // ex 162/2234
+  t = t.replace(/TEMPORARILY|POWER[- ]?UP|SELL/gi, " ");
+
+  // Force des "lignes" en mettant \n avant des patterns utiles
+  // 1) Titre rune
+  t = t.replace(/(\+\d+\s+[^]*?RUNE\s*\(\d\))/g, "\n$1\n");
+
+  // 2) Main/Sub stats : ATK +160 / HP +17% / SPD +25 / ACCURACY +7% etc.
+  t = t.replace(/(ATK|HP|DEF|SPD|ACCURACY|RESISTANCE|CR|CD)\s*\+\s*\d+(\+\d+)?%?/g, "\n$1 +$0".replace("$1 +","") );
+
+  // La ligne ci-dessus peut être trop aggressive selon navigateur,
+  // donc on fait une version plus sûre juste après :
+  t = t.replace(/(ATK|HP|DEF|SPD|ACCURACY|RESISTANCE|CR|CD)\s*\+\s*/g, "\n$1 +");
+
+  // 3) Ligne set bonus
+  t = t.replace(/(\d+\s*SET\s*:\s*SPD\s*\+\s*\d+%)/g, "\n$1\n");
+
+  // Nettoyage final
+  t = t.replace(/[“”‘’]/g, '"')
+       .replace(/[^\S\n]+/g, " ")
+       .replace(/\n+/g, "\n")
+       .trim();
+
+  return t;
+}
 // normalisation texte OCR
 function normText(t){
   return (t||"")
