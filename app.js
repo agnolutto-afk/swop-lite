@@ -185,3 +185,31 @@ $("btnClear").addEventListener("click", ()=>{
   saveRunes([]);
   renderRunes();
 });
+// ---------------- OCR batch ----------------
+async function ocrCropFromCurrentImage() {
+  if (!files.length) return;
+
+  const cropPct = getCropPct();
+  const out = await cropToUrls(files[idx], cropPct);
+
+  $("imgMeta").textContent = "OCR en cours...";
+
+  const result = await Tesseract.recognize(
+    out.cropUrl,
+    "eng",
+    { logger: m => $("imgMeta").textContent = `OCR ${Math.round((m.progress||0)*100)}%` }
+  );
+
+  $("imgMeta").textContent = result.data.text || "(aucun texte détecté)";
+}
+
+async function ocrBatchAll() {
+  if (!files.length) return;
+
+  for (let i = 0; i < files.length; i++) {
+    idx = i;
+    setInfo();
+    await ocrCropFromCurrentImage();
+    await new Promise(r => setTimeout(r, 300)); // pause légère pour le mobile
+  }
+}
