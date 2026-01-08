@@ -1,4 +1,4 @@
-const CACHE = "swop-lite-v1";
+const CACHE = "swop-lite-v2";
 const ASSETS = ["./", "./index.html", "./app.js", "./manifest.json", "./sw.js"];
 
 self.addEventListener("install", (e) => {
