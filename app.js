@@ -201,7 +201,7 @@ async function ocrCropFromCurrentImage() {
   );
 
   $("imgMeta").textContent = result.data.text || "(aucun texte détecté)";
-}
+fillFormFromOCR(result.data.text || "");}
 
 async function ocrBatchAll() {
   if (!files.length) return;
