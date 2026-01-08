@@ -187,36 +187,37 @@ $("btnClear").addEventListener("click", ()=>{
 });
 // ---------------- OCR batch ----------------
 async function ocrCropFromCurrentImage() {
-  if (!files.length) return;
+  try {
+    if (!files || !files.length) {
+      $("imgMeta").textContent = "Aucune image sélectionnée.";
+      return;
+    }
 
-  const cropPct = getCropPct();
-  const out = await cropToUrls(files[idx], cropPct);
+    const cropPct = getCropPct();
+    const out = await cropToUrls(files[idx], cropPct);
 
-  $("imgMeta").textContent = "OCR en cours...";
+    $("imgMeta").textContent = "OCR en cours...";
 
-  const result = await Tesseract.recognize(
-  out.cropUrl,
-  "eng",
-  {
-    logger: m => $("imgMeta").textContent = `OCR ${Math.round((m.progress||0)*100)}%`,
-    tessedit_pageseg_mode: "6",
-    tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789%+.-(): \n"
-  }
-);
+    const result = await Tesseract.recognize(
+      out.cropUrl,
+      "eng",
+      {
+        logger: m => $("imgMeta").textContent = `OCR ${Math.round((m.progress || 0) * 100)}%`,
+        tessedit_pageseg_mode: "6",
+        tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789%+.-(): \n"
+      }
+    );
 
-  const cleaned = cleanAndFormatOcr(result.data.text || "");
-$("imgMeta").textContent = cleaned || "(aucun texte détecté)";
-fillFormFromOCR(cleaned);
-async function ocrBatchAll() {
-  if (!files.length) return;
+    const cleaned = cleanAndFormatOcr(result.data.text || "");
+    $("imgMeta").textContent = cleaned || "(aucun texte détecté)";
+    fillFormFromOCR(cleaned);
 
-  for (let i = 0; i < files.length; i++) {
-    idx = i;
-    setInfo();
-    await ocrCropFromCurrentImage();
-    await new Promise(r => setTimeout(r, 300)); // pause légère pour le mobile
+  } catch (e) {
+    console.error(e);
+    $("imgMeta").textContent = "ERREUR: " + (e?.message || e);
   }
 }
+
 // ================== OCR PARSING ==================
 function cleanAndFormatOcr(raw){
   let s = (raw || "")
