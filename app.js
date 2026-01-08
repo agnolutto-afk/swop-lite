@@ -364,7 +364,7 @@ function detectSubstats(text){
 
 // Remplit le formulaire à partir du texte OCR
 function fillFormFromOCR(text){
-  const t = fixCommonOcr(normText(text));
+  const t = normText(text);
 
   $("fSet").value   = detectSet(t);
   $("fSlot").value  = detectSlot(t);
