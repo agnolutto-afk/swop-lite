@@ -4,18 +4,95 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>SWOP Lite</title>
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#ffffff">
-</head>
-<body>
-  <h1>SWOP Lite</h1>
-  <p>Si tu vois ce texte, c’est bon ✅</p>
 
-  <script src="app.js"></script>
-  <script>
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("./sw.js").catch(()=>{});
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#111">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      background: #111;
+      color: #eee;
     }
-  </script>
+    header {
+      padding: 12px;
+      background: #1e1e1e;
+      text-align: center;
+      font-weight: bold;
+    }
+    nav {
+      display: flex;
+      border-top: 1px solid #333;
+    }
+    nav button {
+      flex: 1;
+      padding: 12px;
+      background: #1e1e1e;
+      color: #eee;
+      border: none;
+      font-size: 14px;
+    }
+    nav button.active {
+      background: #333;
+    }
+    section {
+      display: none;
+      padding: 16px;
+    }
+    section.active {
+      display: block;
+    }
+    .card {
+      background: #1e1e1e;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+    input[type="file"] {
+      width: 100%;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>SWOP Lite</header>
+
+<section id="view-scan" class="active">
+  <div class="card">
+    <h2>Scan runes</h2>
+    <input type="file" id="scanInput" accept="image/*" multiple>
+    <p style="opacity:.7">Importe plusieurs screenshots de runes</p>
+  </div>
+</section>
+
+<section id="view-runes">
+  <div class="card">
+    <h2>Liste des runes</h2>
+    <p>(à venir)</p>
+  </div>
+</section>
+
+<section id="view-optimizer">
+  <div class="card">
+    <h2>Optimiseur</h2>
+    <p>(à venir)</p>
+  </div>
+</section>
+
+<nav>
+  <button id="btnScan" class="active">Scan</button>
+  <button id="btnRunes">Runes</button>
+  <button id="btnOpti">Optimiser</button>
+</nav>
+
+<script src="app.js"></script>
+<script>
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("./sw.js");
+  }
+</script>
+
 </body>
 </html>
